@@ -2,11 +2,37 @@ import pickle
 import pandas as pd
 
 # Load the trained model
-with open("property_price_model.pkl", "rb") as file:
-    model = pickle.load(file)
+import mysql.connector
+import pandas as pd
+import pickle
+
+# === Step 1: SQL → CSV ===
+def fetch_data_from_sql():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="armaan17",
+        database="major_project"
+    )
+
+    query = "SELECT * FROM properties"
+    df_sql = pd.read_sql(query, conn)
+    conn.close()
+
+    # Save to CSV
+    df_sql.to_csv("property_data_with_codes.csv", index=False)
+
+# === Step 2: Load CSV + Model ===
+def load_data_and_model():
+    df = pd.read_csv("property_data_with_codes.csv")
+    with open("property_price_model.pkl", "rb") as file:
+        model = pickle.load(file)
+    return df, model
 
 # Load dataset for reference
 df = pd.read_csv("property_data_with_codes.csv")
+
+
 
 # Define column names for price years 1 to 10
 price_years = [f"Price Year {i}" for i in range(1, 11)]
@@ -55,6 +81,7 @@ def predict_property_price(property_code: str, years_to_predict: int):
 
 # ===== Input Section =====
 if __name__ == "__main__":
+    df, model = load_data_and_model()
     property_code_input = input("Enter Property Code: ")
     years_input = int(input("Enter number of years to predict: "))
     predict_property_price(property_code_input, years_input)
